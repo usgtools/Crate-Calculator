@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crate Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #151515;
+  --blue: #00B5F0;
+  --yellow: #FCB52F;
+  --yellow-hover: #e5a327;
+  --gray: #9B9B9B;
+  --error: #ef4444;
+  --accent-light: #e6f7fd;
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --border: #e0e0e0;
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --error-bg: #fef2f2;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--black);
+  padding: 1.5rem;
+  min-height: 100vh;
+}
+.app-container { max-width: 900px; margin: 0 auto; }
+.app-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.app-header .logo-mark {
+  width: 44px; height: 44px; background: var(--black); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.app-header .logo-mark svg { width: 26px; height: 26px; }
+.app-header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+.app-header h1 span { color: var(--gray); font-weight: 400; font-size: 0.9rem; margin-left: 0.5rem; }
+.tab-bar {
+  display: flex; gap: 0; background: var(--surface); border-radius: 6px;
+  border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem;
+}
+.tab-btn {
+  flex: 1; padding: 0.7rem 0.5rem; font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem; font-weight: 600; border: none; background: transparent;
+  cursor: pointer; color: var(--gray); transition: all 0.2s;
+  border-bottom: 3px solid transparent; text-align: center;
+}
+.tab-btn:hover { background: var(--accent-light); color: var(--black); }
+.tab-btn.active { color: var(--black); background: var(--accent-light); border-bottom-color: var(--blue); }
+.section-card {
+  background: var(--surface); border-radius: 6px; border: 1px solid var(--border);
+  border-left: 3px solid var(--blue); margin-bottom: 1rem; overflow: hidden;
+}
+.section-header {
+  background: var(--black); color: #fff; padding: 0.6rem 1rem;
+  font-size: 0.82rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; display: flex; align-items: center; justify-content: space-between;
+}
+.section-header .badge {
+  background: var(--blue); color: #fff; font-size: 0.68rem;
+  padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 500;
+}
+.section-body { padding: 1rem; }
+.input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+.input-group label {
+  display: block; font-size: 0.72rem; font-weight: 600; color: var(--gray);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;
+}
+.input-group input {
+  width: 100%; padding: 0.55rem 0.7rem; font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem; font-weight: 500; border: 2px solid var(--border);
+  border-radius: 4px; background: var(--surface); color: var(--black);
+  transition: border-color 0.2s; text-align: center;
+}
+.input-group input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,181,240,0.12); }
+.input-group .unit { font-size: 0.7rem; color: var(--gray); text-align: center; margin-top: 0.2rem; }
+.centers-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;
+  margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--border);
+}
+.helper-text { font-size: 0.72rem; color: var(--gray); font-style: italic; }
+.calc-btn {
+  display: block; width: 100%; padding: 0.8rem; font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;
+  background: var(--yellow); color: var(--black); transition: background 0.2s; margin-bottom: 1rem;
+}
+.calc-btn:hover { background: var(--yellow-hover); }
+.results-area { display: none; }
+.results-area.visible { display: block; }
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.75rem; text-align: center;
+}
+.stat-card .stat-label { font-size: 0.68rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 500; color: var(--black); margin-top: 0.2rem; }
+.stat-card .stat-unit { font-size: 0.7rem; color: var(--gray); }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead th {
+  background: #eaeaea; padding: 0.5rem 0.75rem; font-size: 0.72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray); text-align: left;
+}
+.data-table thead th:last-child, .data-table thead th:nth-child(2) { text-align: right; }
+.data-table tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+.data-table tbody td:last-child, .data-table tbody td:nth-child(2) {
+  text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 500;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.board-table { width: 100%; border-collapse: collapse; }
+.board-table th {
+  background: #eaeaea; padding: 0.45rem 0.6rem; font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray); text-align: left;
+}
+.board-table th:nth-child(2), .board-table th:nth-child(3) { text-align: right; }
+.board-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+.board-table td:nth-child(2), .board-table td:nth-child(3) {
+  text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 500;
+}
+.spacing-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.spacing-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0; }
+.spacing-item .sp-label { font-size: 0.85rem; color: var(--gray); font-weight: 500; }
+.spacing-item .sp-value { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 0.95rem; }
+.notes-list { list-style: none; padding: 0; }
+.notes-list li {
+  padding: 0.35rem 0; font-size: 0.82rem; color: #555;
+  display: flex; align-items: flex-start; gap: 0.5rem;
+}
+.notes-list li::before {
+  content: ''; display: inline-block; width: 6px; height: 6px;
+  background: var(--blue); border-radius: 50%; flex-shrink: 0; margin-top: 0.35rem;
+}
+.build-steps { counter-reset: step; list-style: none; padding: 0; }
+.build-steps li {
+  counter-increment: step; padding: 0.4rem 0; font-size: 0.85rem;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.build-steps li::before {
+  content: counter(step); display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; background: var(--accent-light); color: var(--blue);
+  font-weight: 700; font-size: 0.72rem; border-radius: 50%; flex-shrink: 0;
+}
+.crate-viz-container {
+  position: relative; width: 100%; height: 380px; overflow: hidden;
+  background: linear-gradient(180deg, #fafafa 0%, #eeeeee 100%); border-radius: 4px;
+  cursor: grab;
+}
+.crate-viz-container:active { cursor: grabbing; }
+.crate-viz-container canvas { width: 100%; height: 100%; display: block; }
+.viz-controls { position: absolute; bottom: 8px; right: 8px; display: flex; gap: 4px; }
+.viz-controls button {
+  width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.9); cursor: pointer; font-size: 0.75rem;
+  display: flex; align-items: center; justify-content: center; color: var(--gray);
+}
+.viz-controls button:hover { border-color: var(--blue); color: var(--blue); }
+.viz-legend { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 3px; }
+.viz-legend-item {
+  display: flex; align-items: center; gap: 5px; font-size: 0.65rem; font-weight: 500;
+  color: #555; background: rgba(255,255,255,0.85); padding: 2px 6px; border-radius: 3px;
+}
+.viz-legend-item .swatch { width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.15); }
+.viz-hint {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  font-size: 0.65rem; color: var(--gray); background: rgba(255,255,255,0.8);
+  padding: 2px 8px; border-radius: 3px; pointer-events: none;
+}
+.print-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.2rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 700;
+  border: none; border-radius: 4px; cursor: pointer; background: var(--black);
+  color: #fff; transition: background 0.2s; margin-bottom: 1.5rem;
+}
+.print-btn:hover { background: #333; }
+.print-btn svg { width: 16px; height: 16px; }
+.pump-jack-warning {
+  display: none; margin-top: 0.5rem; padding: 0.4rem 0.7rem;
+  background: var(--error-bg); color: var(--error); font-size: 0.78rem;
+  font-weight: 500; border-radius: 4px;
+}
+.pump-jack-warning.visible { display: block; }
+@media print {
+  body { background: #fff; padding: 0.5cm; font-size: 11pt; }
+  .app-container { max-width: 100%; }
+  .tab-bar, .calc-btn, .print-btn, .viz-controls, .viz-legend, .viz-hint, .no-print { display: none !important; }
+  .results-area { display: block !important; }
+  .section-card { break-inside: avoid; margin-bottom: 0.5cm; border: 1px solid #ccc; }
+  .section-header { background: var(--black) !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .crate-viz-container { height: 280px; cursor: default; }
+  .build-steps li::before { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media (max-width: 640px) {
+  .input-grid { grid-template-columns: 1fr 1fr; }
+  .centers-grid { grid-template-columns: 1fr 1fr; }
+  .stats-row { grid-template-columns: 1fr; }
+  .spacing-row { grid-template-columns: 1fr; }
+  .tab-btn { font-size: 0.7rem; padding: 0.6rem 0.3rem; }
+}
+</style>
+</head>
+<body>
+<div class="app-container">
+  <div class="app-header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#FCB52F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    </div>
+    <h1>Crate Calculator <span>v2.0</span></h1>
+  </div>
+  <div class="tab-bar no-print">
+    <button class="tab-btn active" data-type="skid-lid" onclick="switchTab(this)">Skid Bottom + Lid</button>
+    <button class="tab-btn" data-type="skid-1x4" onclick="switchTab(this)">Skid Bottom + 1×4 Top</button>
+    <button class="tab-btn" data-type="narrow" onclick="switchTab(this)">Narrow Crate</button>
+    <button class="tab-btn" data-type="narrow-fork" onclick="switchTab(this)">Narrow Fork Crate</button>
+  </div>
+  <div class="section-card no-print">
+    <div class="section-header">Item Dimensions <span class="badge">All measurements in inches</span></div>
+    <div class="section-body">
+      <div class="input-grid">
+        <div class="input-group"><label>Width (W)</label><input type="number" id="inputW" min="1" step="0.25" placeholder="44"><div class="unit">inches</div></div>
+        <div class="input-group"><label>Length (L)</label><input type="number" id="inputL" min="1" step="0.25" placeholder="48"><div class="unit">inches</div></div>
+        <div class="input-group"><label>Height (H)</label><input type="number" id="inputH" min="1" step="0.25" placeholder="10"><div class="unit">inches</div></div>
+      </div>
+      <div class="centers-grid" id="centersGrid"></div>
+      <div class="pump-jack-warning" id="pumpWarning">⚠ Minimum width for pump jack is 28″</div>
+    </div>
+  </div>
+  <button class="calc-btn no-print" onclick="calculate()">Calculate Crate</button>
+  <div class="results-area" id="resultsArea">
+    <div class="section-card" style="display:none;" id="printInputSummary">
+      <div class="section-header">Job Specs</div>
+      <div class="section-body"><div id="printInputContent"></div></div>
+    </div>
+    <div class="section-card">
+      <div class="section-header">Crate Visualization <span class="badge">Drag to rotate</span></div>
+      <div class="section-body" style="padding:0;">
+        <div class="crate-viz-container" id="crateViz">
+          <canvas id="crateCanvas"></canvas>
+          <div class="viz-legend" id="vizLegend"></div>
+          <div class="viz-controls no-print">
+            <button onclick="rotateViz(-1)" title="Rotate Left">↶</button>
+            <button onclick="rotateViz(1)" title="Rotate Right">↷</button>
+            <button onclick="resetViz()" title="Reset">⟲</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Final Crate Size</div><div class="stat-value" id="finalSize" style="font-size:1.1rem;">—</div><div class="stat-unit">W × L × H (inches)</div></div>
+      <div class="stat-card"><div class="stat-label">Total Wood</div><div class="stat-value" id="totalWood">—</div><div class="stat-unit">linear feet</div></div>
+      <div class="stat-card"><div class="stat-label">Est. Weight</div><div class="stat-value" id="totalWeight">—</div><div class="stat-unit">lbs</div></div>
+    </div>
+    <div class="stats-row" style="grid-template-columns: 1fr 1fr;">
+      <div class="stat-card"><div class="stat-label">Final Interior Height</div><div class="stat-value" id="finalIDH">—</div><div class="stat-unit">inches</div></div>
+      <div class="stat-card"><div class="stat-label">Board Counts</div><div class="stat-value" id="boardCounts">—</div><div class="stat-unit" id="boardCountsLabel">Hz / Vt</div></div>
+    </div>
+    <div class="section-card"><div class="section-header">Board Breakdown</div><div class="section-body" style="padding:0;"><table class="board-table"><thead><tr><th>Component</th><th>Qty</th><th>Length</th></tr></thead><tbody id="boardTableBody"></tbody></table></div></div>
+    <div class="section-card"><div class="section-header">Cut Sheet</div><div class="section-body" style="padding:0;"><table class="data-table"><thead><tr><th>Cut</th><th>Qty</th><th>Cut Length</th></tr></thead><tbody id="cutTableBody"></tbody></table></div></div>
+    <div class="section-card"><div class="section-header">Space Between Boards</div><div class="section-body"><div class="spacing-row" id="spacingContent"></div></div></div>
+    <div class="section-card"><div class="section-header">Build Order</div><div class="section-body"><ol class="build-steps" id="buildSteps"></ol></div></div>
+    <div class="section-card"><div class="section-header">Notes</div><div class="section-body"><ul class="notes-list" id="notesList"></ul></div></div>
+    <button class="print-btn no-print" onclick="window.print()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print Cut Sheet
+    </button>
+  </div>
+</div>
+<script>
+let currentType = 'skid-lid';
+let vizAngle = 0.55;
+let vizData = null;
+let isDragging = false;
+let lastMouse = {x:0,y:0};
+
+const BT = 0.75;  // actual board thickness
+const BW = 3.5;   // actual board width
+
+const CRATE_TYPES = {
+  'skid-lid': { name:'Skid Bottom + Lid', centers:[
+    {id:'cH',label:'Hz Centers',placeholder:'3.5',help:'Set to 3.5 for no spacing'},
+    {id:'cV',label:'Vt Centers',placeholder:'24',help:''}], threeC:false },
+  'skid-1x4': { name:'Skid Bottom + 1×4 Top', centers:[
+    {id:'cH',label:'Hz Centers',placeholder:'6',help:'Set to 3.5 for no spacing'},
+    {id:'cV',label:'Vt Centers',placeholder:'24',help:''}], threeC:false },
+  'narrow': { name:'Narrow Crate', centers:[
+    {id:'cH',label:'Hz Centers',placeholder:'3.5',help:'Set to 3.5 for no spacing'},
+    {id:'cV',label:'Vt Centers',placeholder:'8',help:''}], threeC:false },
+  'narrow-fork': { name:'Narrow Fork Crate', centers:[
+    {id:'cB',label:'Btm Centers',placeholder:'4',help:''},
+    {id:'cH',label:'Hz Centers',placeholder:'7',help:''},
+    {id:'cV',label:'Vt Centers',placeholder:'33',help:''}], threeC:true },
+};
+
+function switchTab(btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); currentType=btn.dataset.type;
+  buildCentersInputs(); document.getElementById('resultsArea').classList.remove('visible');
+}
+function buildCentersInputs(){
+  const c=CRATE_TYPES[currentType], g=document.getElementById('centersGrid');
+  g.innerHTML=c.centers.map(x=>`<div class="input-group"><label>${x.label}</label><input type="number" id="${x.id}" min="0.5" step="0.5" placeholder="${x.placeholder}">${x.help?`<div class="unit helper-text">${x.help}</div>`:'<div class="unit">spacing</div>'}</div>`).join('');
+  g.style.gridTemplateColumns=c.threeC?'repeat(3,1fr)':'repeat(2,1fr)';
+}
+function getVal(id){return parseFloat(document.getElementById(id).value);}
+function fmt(n){return Math.round(n*100)/100;}
+
+function calculate(){
+  const W=getVal('inputW'),L=getVal('inputL'),H=getVal('inputH');
+  if(isNaN(W)||isNaN(L)||isNaN(H)||W<=0||L<=0||H<=0){alert('Please enter valid dimensions.');return;}
+  document.getElementById('pumpWarning').classList.toggle('visible',W<28);
+  let r;
+  switch(currentType){
+    case 'skid-lid':r=calcSkidLid(W,L,H);break;
+    case 'skid-1x4':r=calcSkid1x4(W,L,H);break;
+    case 'narrow':r=calcNarrow(W,L,H);break;
+    case 'narrow-fork':r=calcNarrowFork(W,L,H);break;
+  }
+  renderResults(r);
+  document.getElementById('resultsArea').classList.add('visible');
+  document.getElementById('resultsArea').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function calcSkidLid(W,L,H){
+  const cH=getVal('cH')||3.5, cV=getVal('cV')||24;
+  const numHz=Math.ceil(H/cH), numVt=Math.ceil(L/cV);
+  const btmQty=numVt*2, btmWidth=W+5;
+  const sidesVtQty=numVt*2, sidesVtHeight=H+7;
+  const sidesHzQty=(numHz+1)*2, sidesHzLength=L+3;
+  const hzPerSide=(sidesHzQty-2)/2;
+  const endsQty=hzPerSide*2, endsWidth=btmWidth+1.5;
+  const finalW=endsWidth, finalL=sidesHzLength+1.5, finalH=sidesVtHeight+0.75;
+  const finalIDH=sidesVtHeight-4.25;
+  const cuts=[
+    {name:'Lengths (Hz)',qty:sidesHzQty,length:sidesHzLength},
+    {name:'Uprights (Vt)',qty:sidesVtQty,length:sidesVtHeight},
+    {name:'Ends',qty:endsQty,length:endsWidth},
+    {name:'Bottom',qty:btmQty-1,length:btmWidth}];
+  const totalWood=cuts.reduce((s,c)=>s+c.qty*c.length,0)/12;
+  const totalWeight=totalWood*0.4375;
+  const hzSpacing=((sidesHzLength)-(numVt*3.54))/(numVt-1);
+  const vtSpacing=((finalIDH)-(numHz*3.54))/(numHz-1);
+  const boards=[
+    {name:'Bottom',qty:btmQty,dim:btmWidth+'″'},
+    {name:'Sides Vertical',qty:sidesVtQty,dim:sidesVtHeight+'″'},
+    {name:'Sides Horizontal',qty:sidesHzQty,dim:sidesHzLength+'″'},
+    {name:'Ends',qty:endsQty,dim:endsWidth+'″'}];
+  const steps=['Build bottom','Build sides — bottom board 4.25″ up from bottom','Attach sides','Attach ends','Cut and attach lid'];
+  const notes=['Accounts for 1″ of interior foam on all sides including bottom','All wood is nominal 1×4 (actual 0.75″ × 3.5″)','Space between boards is approximate — adjust as needed','If one board high, height should be 7.75″ vertical board'];
+  vizData={w:finalW,l:finalL,h:finalH,type:'lid',nHz:numHz+1,nVt:numVt,nBtm:btmQty-1,nEnds:hzPerSide};
+  return {finalW,finalL,finalH,finalIDH,numHz,numVt,cuts,boards,totalWood,totalWeight,hzSpacing,vtSpacing,steps,notes,typeName:'Skid Bottom + Lid'};
+}
+function calcSkid1x4(W,L,H){
+  const cH=getVal('cH')||6, cV=getVal('cV')||24;
+  const numHz=Math.ceil(H/cH), numVt=Math.ceil(L/cV);
+  const btmQty=numVt, btmWidth=W+5;
+  const sidesVtQty=btmQty*2, sidesVtHeight=H+7;
+  const sidesHzQty=(numHz+1)*2, sidesHzLength=L+3;
+  const virPS=sidesVtQty/2, horPS=(sidesHzQty-2)/2;
+  const endsTopQty=(virPS*2)+(horPS*2), endsTopWidth=btmWidth+1.5;
+  const finalW=endsTopWidth, finalL=sidesHzLength+1.5, finalH=sidesVtHeight+0.75;
+  const finalIDH=sidesVtHeight-4.25;
+  const cuts=[
+    {name:'Lengths (Hz)',qty:sidesHzQty,length:sidesHzLength},
+    {name:'Uprights (Vt)',qty:sidesVtQty,length:sidesVtHeight},
+    {name:'Top/Ends',qty:endsTopQty,length:endsTopWidth},
+    {name:'Bottom',qty:btmQty*2,length:btmWidth}];
+  const totalWood=cuts.reduce((s,c)=>s+c.qty*c.length,0)/12;
+  const totalWeight=totalWood*0.4375;
+  const hzSpacing=((sidesHzLength)-(numVt*3.54))/(numVt-1);
+  const vtSpacing=((finalIDH)-(numHz*3.54))/(numHz-1);
+  const boards=[
+    {name:'Bottom',qty:btmQty,dim:btmWidth+'″'},
+    {name:'Sides Vertical',qty:sidesVtQty,dim:sidesVtHeight+'″'},
+    {name:'Sides Horizontal',qty:sidesHzQty,dim:sidesHzLength+'″'},
+    {name:'Ends/Top',qty:endsTopQty,dim:endsTopWidth+'″'}];
+  const steps=['Build bottom','Build sides — bottom board 4.25″ up from bottom','Attach sides','Attach ends'];
+  const notes=['Accounts for 1″ of interior foam on all sides including bottom','All wood is nominal 1×4 (actual 0.75″ × 3.5″)','Space between boards is approximate — adjust as needed','If one board high, height should be 7.75″ vertical board'];
+  vizData={w:finalW,l:finalL,h:finalH,type:'1x4top',nHz:numHz+1,nVt:numVt,nBtm:btmQty,nEnds:horPS};
+  return {finalW,finalL,finalH,finalIDH,numHz,numVt,cuts,boards,totalWood,totalWeight,hzSpacing,vtSpacing,steps,notes,typeName:'Skid Bottom + 1×4 Top'};
+}
+function calcNarrow(W,L,H){
+  const cH=getVal('cH')||3.5, cV=getVal('cV')||8;
+  const numHz=Math.ceil(H/cH), numVt=Math.ceil(L/cV);
+  const btmQty=numVt, btmWidth=W+5;
+  const sidesVtQty=btmQty*2, sidesVtHeight=H+4.25;
+  const sidesHzQty=(numHz+1)*2, sidesHzLength=L+3;
+  const virPS=sidesVtQty/2, horPS=(sidesHzQty-2)/2;
+  const endsTopQty=virPS+(horPS*2), endsTopWidth=btmWidth+1.5;
+  const finalW=endsTopWidth, finalL=sidesHzLength+1.5, finalH=sidesVtHeight+0.75;
+  const finalIDH=sidesVtHeight-1.5;
+  const cuts=[
+    {name:'Lengths (Hz)',qty:sidesHzQty,length:sidesHzLength},
+    {name:'Uprights (Vt)',qty:sidesVtQty,length:sidesVtHeight},
+    {name:'Ends/Top',qty:endsTopQty,length:endsTopWidth},
+    {name:'Bottom',qty:btmQty,length:btmWidth}];
+  const forkQty=finalL/30;
+  if(forkQty>=1) cuts.push({name:'Fork 2×4 (optional)',qty:Math.round(forkQty),length:endsTopWidth});
+  const totalWood=cuts.reduce((s,c)=>s+c.qty*c.length,0)/12;
+  const totalWeight=totalWood*0.4375;
+  const hzSpacing=((sidesHzLength)-(numVt*3.54))/(numVt-1);
+  const vtSpacing=((finalIDH)-(numHz*3.54))/(numHz-1);
+  const boards=[
+    {name:'Bottom',qty:btmQty,dim:btmWidth+'″'},
+    {name:'Sides Vertical',qty:sidesVtQty,dim:sidesVtHeight+'″'},
+    {name:'Sides Horizontal',qty:sidesHzQty,dim:sidesHzLength+'″'},
+    {name:'Ends/Top',qty:endsTopQty,dim:endsTopWidth+'″'}];
+  const steps=['Build bottom','Build sides','Attach sides','Attach ends'];
+  const notes=['Accounts for 1″ of interior foam on all sides including bottom','All wood is nominal 1×4 (actual 0.75″ × 3.5″)','Space between boards is approximate — adjust as needed','If one board high, height should be 8″','Minimum width for pump jack is 28″'];
+  vizData={w:finalW,l:finalL,h:finalH,type:'narrow',nHz:numHz+1,nVt:numVt,nBtm:btmQty,nEnds:horPS};
+  return {finalW,finalL,finalH,finalIDH,numHz,numVt,cuts,boards,totalWood,totalWeight,hzSpacing,vtSpacing,steps,notes,typeName:'Narrow Crate'};
+}
+function calcNarrowFork(W,L,H){
+  const cB=getVal('cB')||4, cH=getVal('cH')||7, cV=getVal('cV')||33;
+  const btmWidth=W+3, numBtm=Math.floor(btmWidth/cB);
+  const sidesVtHeight=H+8, finalIDH=sidesVtHeight-5;
+  const numHz=Math.ceil(finalIDH/cH), sidesHzLength=L+4, numVt=Math.ceil(sidesHzLength/cV);
+  const endsQty=(numHz*2)+2, sidesVtQty=(numVt*2)+4;
+  const sidesHzQty=(numHz*2)+(numBtm*2);
+  const topQty=numVt, topWidth=btmWidth+3;
+  const botSkidQty=(sidesVtQty-4)/2, botSkidLength=btmWidth+1.5;
+  const finalW=topWidth, finalL=sidesHzLength+1.5, finalH=sidesVtHeight+0.75;
+  const cuts=[
+    {name:'Lengths (Hz/Btm/Top)',qty:sidesHzQty,length:sidesHzLength},
+    {name:'Uprights (Vt)',qty:sidesVtQty,length:sidesVtHeight},
+    {name:'Top',qty:topQty,length:topWidth},
+    {name:'Ends',qty:endsQty,length:btmWidth},
+    {name:'Bottom Skid',qty:botSkidQty,length:botSkidLength}];
+  const totalWood=((sidesHzQty*sidesHzLength)+(sidesVtQty*sidesVtHeight)+(topQty*topWidth)+(endsQty*btmWidth))/12;
+  const totalWeight=totalWood*0.1;
+  const hzSpacing=numVt>1?((sidesHzLength)-(numVt*3.54))/(numVt-1):0;
+  const vtSpacing=numHz>1?((finalIDH)-(numHz*3.54))/(numHz-1):0;
+  const btmSpacing=numBtm>1?((btmWidth)-(numBtm*3.54))/(numBtm-1):0;
+  const boards=[
+    {name:'Ends',qty:endsQty,dim:btmWidth+'″'},
+    {name:'Sides Vt / Ends Vt',qty:sidesVtQty,dim:sidesVtHeight+'″'},
+    {name:'Sides Hz / Bottom / Top',qty:sidesHzQty,dim:sidesHzLength+'″'},
+    {name:'Top',qty:topQty,dim:topWidth+'″'}];
+  const steps=['Build bottom frame with skids','Build side panels','Attach sides to bottom','Attach ends','Attach top boards'];
+  const notes=['Accounts for 1″ of interior foam on all sides including bottom','All wood is nominal 1×4 (actual 0.75″ × 3.5″)','Space between boards is approximate — adjust as needed','Minimum width for pump jack is 28″'];
+  vizData={w:finalW,l:finalL,h:finalH,type:'fork',nHz:numHz,nVt:numVt,nBtm:numBtm,nEnds:numHz+1};
+  return {finalW,finalL,finalH,finalIDH,numHz,numVt,cuts,boards,totalWood,totalWeight,hzSpacing,vtSpacing,btmSpacing,steps,notes,typeName:'Narrow Fork Crate',numBtm};
+}
+
+function renderResults(r){
+  document.getElementById('printInputSummary').style.display='';
+  document.getElementById('printInputContent').innerHTML=`<div style="display:flex;gap:2rem;flex-wrap:wrap;">
+    <div><strong>Type:</strong> ${r.typeName}</div>
+    <div><strong>Item W:</strong> <span style="font-family:'JetBrains Mono',monospace">${getVal('inputW')}″</span></div>
+    <div><strong>Item L:</strong> <span style="font-family:'JetBrains Mono',monospace">${getVal('inputL')}″</span></div>
+    <div><strong>Item H:</strong> <span style="font-family:'JetBrains Mono',monospace">${getVal('inputH')}″</span></div></div>`;
+  document.getElementById('finalSize').textContent=`${fmt(r.finalW)} × ${fmt(r.finalL)} × ${fmt(r.finalH)}`;
+  document.getElementById('totalWood').textContent=fmt(r.totalWood);
+  document.getElementById('totalWeight').textContent=fmt(r.totalWeight);
+  document.getElementById('finalIDH').textContent=fmt(r.finalIDH)+'″';
+  if(r.numBtm){
+    document.getElementById('boardCounts').textContent=`${r.numBtm} / ${r.numHz} / ${r.numVt}`;
+    document.getElementById('boardCountsLabel').textContent='Btm / Hz / Vt';
+  } else {
+    document.getElementById('boardCounts').textContent=`${r.numHz} / ${r.numVt}`;
+    document.getElementById('boardCountsLabel').textContent='Hz / Vt';
+  }
+  document.getElementById('boardTableBody').innerHTML=r.boards.map(b=>`<tr><td>${b.name}</td><td>${b.qty}</td><td>${b.dim}</td></tr>`).join('');
+  document.getElementById('cutTableBody').innerHTML=r.cuts.map(c=>`<tr><td>${c.name}</td><td>${c.qty}</td><td>${fmt(c.length)}″</td></tr>`).join('');
+  let sp=`<div><div class="spacing-item"><span class="sp-label">Horizontal</span><span class="sp-value">${isFinite(r.hzSpacing)&&r.hzSpacing>0?fmt(r.hzSpacing)+'″':'N/A'}</span></div></div>
+    <div><div class="spacing-item"><span class="sp-label">Vertical</span><span class="sp-value">${isFinite(r.vtSpacing)&&r.vtSpacing>0?fmt(r.vtSpacing)+'″':'N/A'}</span></div></div>`;
+  if(r.btmSpacing!==undefined) sp+=`<div><div class="spacing-item"><span class="sp-label">Bottom</span><span class="sp-value">${isFinite(r.btmSpacing)&&r.btmSpacing>0?fmt(r.btmSpacing)+'″':'N/A'}</span></div></div>`;
+  document.getElementById('spacingContent').innerHTML=sp;
+  document.getElementById('buildSteps').innerHTML=r.steps.map(s=>`<li>${s}</li>`).join('');
+  document.getElementById('notesList').innerHTML=r.notes.map(n=>`<li>${n}</li>`).join('');
+  drawCrate();
+}
+
+// ===== 3D BOARD-LEVEL VISUALIZATION =====
+function drawCrate(){
+  if(!vizData) return;
+  const canvas=document.getElementById('crateCanvas');
+  const container=document.getElementById('crateViz');
+  const dpr=window.devicePixelRatio||1;
+  const cw=container.clientWidth, ch=container.clientHeight;
+  canvas.width=cw*dpr; canvas.height=ch*dpr;
+  canvas.style.width=cw+'px'; canvas.style.height=ch+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cw,ch);
+
+  const {w,l,h}=vizData;
+  const maxDim=Math.max(w,l,h);
+  const sc=Math.min(cw*0.24, ch*0.35)/maxDim;
+
+  const bt=BT*sc, bw=BW*sc;
+  const sw=w*sc, sl=l*sc, sh=h*sc;
+  const cosA=Math.cos(vizAngle), sinA=Math.sin(vizAngle);
+  const cx=cw/2, cy=ch*0.58;
+
+  function proj(x,y,z){
+    const rx=x*cosA-z*sinA, rz=x*sinA+z*cosA;
+    return {px:cx+rx, py:cy-y*0.92+rz*0.42, d:rz};
+  }
+
+  // Collect all quads (visible faces of boards) for painter's algorithm
+  const quads=[];
+  function addBoard(x,y,z,bx,by,bz,col){
+    // 8 corners of a box at (x,y,z) with size (bx,by,bz)
+    const c=[
+      [x,y,z],[x+bx,y,z],[x+bx,y+by,z],[x,y+by,z],
+      [x,y,z+bz],[x+bx,y,z+bz],[x+bx,y+by,z+bz],[x,y+by,z+bz]
+    ];
+    const p=c.map(v=>proj(v[0]-sw/2, v[1], v[2]-sl/2));
+    // 6 faces
+    const faces=[
+      {i:[0,1,2,3],c:col.f}, // front z-min
+      {i:[4,5,6,7],c:col.f}, // back z-max
+      {i:[0,4,7,3],c:col.s}, // left x-min
+      {i:[1,5,6,2],c:col.s}, // right x-max
+      {i:[3,2,6,7],c:col.t}, // top y-max
+      {i:[0,1,5,4],c:col.s}, // bottom y-min
+    ];
+    faces.forEach(f=>{
+      const fp=f.i.map(j=>p[j]);
+      // Backface cull
+      const cross=(fp[1].px-fp[0].px)*(fp[2].py-fp[0].py)-(fp[1].py-fp[0].py)*(fp[2].px-fp[0].px);
+      if(cross>=0) return;
+      const avgD=(fp[0].d+fp[1].d+fp[2].d+fp[3].d)/4;
+      quads.push({pts:fp, color:f.c, depth:avgD});
+    });
+  }
+
+  const COL={
+    btm: {f:'#c49a5c',s:'#a88042',t:'#d4aa6c'},
+    hz:  {f:'#b89050',s:'#9e7a3e',t:'#c8a060'},
+    vt:  {f:'#a8834a',s:'#8e6e38',t:'#b8935a'},
+    end: {f:'#c09858',s:'#a68244',t:'#d0a868'},
+    top: {f:'#d4aa6c',s:'#ba9456',t:'#e0ba7c'},
+    lid: {f:'#d9b070',s:'#bf9a5a',t:'#e5c080'},
+  };
+
+  const {nHz,nVt,nBtm,nEnds}=vizData;
+
+  // --- BOTTOM boards: run along W (x-axis), spaced along L (z-axis) ---
+  const btmSp=nBtm>1?(sl-nBtm*bw)/(nBtm-1):0;
+  for(let i=0;i<nBtm;i++){
+    const z=i*(bw+btmSp);
+    addBoard(0, 0, z, sw, bt, bw, COL.btm);
+  }
+
+  // --- UPRIGHTS (Vt): on left (x=0) and right (x=sw) sides ---
+  // These are vertical boards on the two long sides, spaced along z
+  const vtSp=nVt>1?(sl-nVt*bw)/(nVt-1):0;
+  for(let side=0;side<2;side++){
+    const xPos=side===0? -bt : sw;
+    for(let i=0;i<nVt;i++){
+      const z=i*(bw+vtSp);
+      addBoard(xPos, bt, z, bt, sh-bt, bw, COL.vt);
+    }
+  }
+
+  // --- HORIZONTALS (Hz): on left and right sides, run along z (length) ---
+  const hzSp=nHz>1?(sh-bt-nHz*bw)/Math.max(nHz-1,1):0;
+  for(let side=0;side<2;side++){
+    const xPos=side===0? -bt-bt : sw+bt; // outside the uprights
+    for(let i=0;i<nHz;i++){
+      const y=bt+i*(bw+Math.max(hzSp,0));
+      addBoard(xPos, y, 0, bt, bw, sl, COL.hz);
+    }
+  }
+
+  // --- ENDS: on front (z=0) and back (z=sl) faces, run across full width ---
+  const endSp=nEnds>1?(sh-bt-nEnds*bw)/Math.max(nEnds-1,1):0;
+  for(let side=0;side<2;side++){
+    const zPos=side===0? -bt : sl;
+    for(let i=0;i<nEnds;i++){
+      const y=bt+i*(bw+Math.max(endSp,0));
+      addBoard(-bt-bt, y, zPos, sw+bt*4, bw, bt, COL.end);
+    }
+  }
+
+  // --- TOP boards: run along W, spaced along L ---
+  const nTop=vizData.type==='lid'? Math.max(3,nBtm):Math.min(nVt+2,6);
+  const topSp=nTop>1?(sl-nTop*bw)/(nTop-1):0;
+  const topCol=vizData.type==='lid'?COL.lid:COL.top;
+  for(let i=0;i<nTop;i++){
+    const z=i*(bw+topSp);
+    addBoard(-bt-bt, sh, z, sw+bt*4, bt, bw, topCol);
+  }
+
+  // Sort by depth (back to front) and draw
+  quads.sort((a,b)=>a.depth-b.depth);
+  quads.forEach(q=>{
+    ctx.beginPath();
+    ctx.moveTo(q.pts[0].px, q.pts[0].py);
+    q.pts.slice(1).forEach(p=>ctx.lineTo(p.px,p.py));
+    ctx.closePath();
+    ctx.fillStyle=q.color;
+    ctx.fill();
+    ctx.strokeStyle='rgba(80,55,25,0.3)';
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  });
+
+  // Dimension lines
+  ctx.font="500 11px 'JetBrains Mono',monospace";
+  const pFL=proj(-sw/2,0,-sl/2), pFR=proj(sw/2,0,-sl/2);
+  const pBR=proj(sw/2,0,sl/2);
+  const pTL=proj(-sw/2,sh,-sl/2), pBL2=proj(-sw/2,0,-sl/2);
+
+  dimLine(ctx,pFL,pFR,`${fmt(w)}″ W`,22);
+  dimLine(ctx,pFR,pBR,`${fmt(l)}″ L`,22);
+  dimLineV(ctx,pBL2,pTL,`${fmt(h)}″ H`,-32);
+
+  // Legend
+  document.getElementById('vizLegend').innerHTML=[
+    {c:COL.btm.f,l:'Bottom'},{c:COL.hz.f,l:'Sides (Hz)'},{c:COL.vt.f,l:'Uprights (Vt)'},
+    {c:COL.end.f,l:'Ends'},{c:topCol.f,l:vizData.type==='lid'?'Lid':'Top'}
+  ].map(x=>`<div class="viz-legend-item"><div class="swatch" style="background:${x.c}"></div>${x.l}</div>`).join('');
+}
+
+function dimLine(ctx,p1,p2,text,off){
+  const dx=p2.px-p1.px, dy=p2.py-p1.py;
+  const len=Math.sqrt(dx*dx+dy*dy);
+  if(len<1)return;
+  const nx=-dy/len*off, ny=dx/len*off;
+  ctx.save();
+  ctx.strokeStyle='#00B5F0'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(p1.px,p1.py); ctx.lineTo(p1.px+nx,p1.py+ny); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p2.px,p2.py); ctx.lineTo(p2.px+nx,p2.py+ny); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p1.px+nx,p1.py+ny); ctx.lineTo(p2.px+nx,p2.py+ny); ctx.stroke();
+  ctx.setLineDash([]);
+  // Arrowheads
+  const ax=dx/len*5, ay=dy/len*5;
+  ctx.fillStyle='#00B5F0';
+  ctx.beginPath(); ctx.moveTo(p1.px+nx+ax*1.5,p1.py+ny+ay*1.5); ctx.lineTo(p1.px+nx-ay*.5,p1.py+ny+ax*.5); ctx.lineTo(p1.px+nx+ay*.5,p1.py+ny-ax*.5); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(p2.px+nx-ax*1.5,p2.py+ny-ay*1.5); ctx.lineTo(p2.px+nx-ay*.5,p2.py+ny+ax*.5); ctx.lineTo(p2.px+nx+ay*.5,p2.py+ny-ax*.5); ctx.fill();
+  const mx=(p1.px+p2.px)/2+nx, my=(p1.py+p2.py)/2+ny-4;
+  const m=ctx.measureText(text);
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  ctx.beginPath(); ctx.roundRect(mx-m.width/2-5,my-7,m.width+10,16,3); ctx.fill();
+  ctx.fillStyle='#151515'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,mx,my+1);
+  ctx.restore();
+}
+function dimLineV(ctx,pb,pt,text,off){
+  ctx.save();
+  ctx.strokeStyle='#00B5F0'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(pb.px,pb.py); ctx.lineTo(pb.px+off,pb.py); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pt.px,pt.py); ctx.lineTo(pt.px+off,pt.py); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pb.px+off,pb.py); ctx.lineTo(pt.px+off,pt.py); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#00B5F0';
+  ctx.beginPath(); ctx.moveTo(pb.px+off,pb.py-5); ctx.lineTo(pb.px+off-3,pb.py); ctx.lineTo(pb.px+off+3,pb.py); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(pt.px+off,pt.py+5); ctx.lineTo(pt.px+off-3,pt.py); ctx.lineTo(pt.px+off+3,pt.py); ctx.fill();
+  const mx=(pb.px+pt.px)/2+off, my=(pb.py+pt.py)/2;
+  const m=ctx.measureText(text);
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  ctx.beginPath(); ctx.roundRect(mx-m.width/2-5,my-7,m.width+10,16,3); ctx.fill();
+  ctx.fillStyle='#151515'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,mx,my+1);
+  ctx.restore();
+}
+
+function rotateViz(d){vizAngle+=d*0.3;drawCrate();}
+function resetViz(){vizAngle=0.55;drawCrate();}
+
+// Drag to rotate
+const cv=document.getElementById('crateCanvas');
+cv.addEventListener('mousedown',e=>{isDragging=true;lastMouse={x:e.clientX,y:e.clientY};});
+window.addEventListener('mousemove',e=>{if(!isDragging)return;vizAngle+=(e.clientX-lastMouse.x)*0.008;lastMouse={x:e.clientX,y:e.clientY};drawCrate();});
+window.addEventListener('mouseup',()=>{isDragging=false;});
+cv.addEventListener('touchstart',e=>{isDragging=true;lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+window.addEventListener('touchmove',e=>{if(!isDragging)return;vizAngle+=(e.touches[0].clientX-lastMouse.x)*0.008;lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};drawCrate();},{passive:true});
+window.addEventListener('touchend',()=>{isDragging=false;});
+
+buildCentersInputs();
+window.addEventListener('resize',()=>{if(vizData)drawCrate();});
+</script>
+</body>
+</html>
